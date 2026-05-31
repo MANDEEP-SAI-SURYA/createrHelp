@@ -30,8 +30,9 @@ def extract_youtube(data: YoutubeRequest):
         }
 
     except Exception as e:
+        print("ERROR:", repr(e))
 
         raise HTTPException(
             status_code=400,
             detail=str(e)
-        )
+    )

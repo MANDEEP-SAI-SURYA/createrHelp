@@ -5,6 +5,9 @@ from dotenv import load_dotenv
 from googleapiclient.discovery import build
 from youtube_transcript_api import YouTubeTranscriptApi
 
+from app.audio_service import download_audio
+from app.assembly_service import transcribe_audio
+
 load_dotenv()
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
@@ -134,11 +137,46 @@ def process_youtube_url(url: str):
         video_metadata["channel_id"]
     )
 
-    transcript_data = get_transcript(video_id)
+    transcript = get_transcript_with_fallback(
+            video_id,
+            url
+        )
 
     return {
-        "video_metadata": video_metadata,
-        "channel_metadata": channel_metadata,
-        "transcript": transcript_data["transcript"],
-        "segments": transcript_data["segments"]
-    }
+    "video_metadata": video_metadata,
+    "channel_metadata": channel_metadata,
+    "transcript": transcript,
+    "segments": []
+}
+    
+
+def get_transcript_with_fallback(video_id, youtube_url):
+
+    try:
+
+        print("Trying YouTube Transcript API...")
+
+        api = YouTubeTranscriptApi()
+
+        transcript = api.fetch(video_id)
+
+        text = " ".join(
+            snippet.text
+            for snippet in transcript
+        )
+
+        print("YouTube transcript found!")
+
+        return text
+
+    except Exception as e:
+
+        print(f"Transcript unavailable: {e}")
+
+        print("Using AssemblyAI fallback...")
+
+        audio_file = download_audio(youtube_url)
+
+        transcript = transcribe_audio(audio_file)
+
+        return transcript
