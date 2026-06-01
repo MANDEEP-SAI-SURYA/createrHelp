@@ -1,5 +1,6 @@
 import { useState } from "react";
 import MessageBubble from "./MessageBubble";
+import { streamChat } from "../api";
 
 function ChatWindow() {
   const [question, setQuestion] = useState("");
@@ -7,12 +8,11 @@ function ChatWindow() {
   const [messages, setMessages] = useState([
     {
       role: "assistant",
-      content:
-        "Hello! Upload your YouTube and Instagram URLs, then ask me questions about the videos.",
+      content: "Ask questions about your uploaded videos.",
     },
   ]);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!question.trim()) return;
 
     const userMessage = {
@@ -20,99 +20,54 @@ function ChatWindow() {
       content: question,
     };
 
-    const assistantMessage = {
-      role: "assistant",
-      content:
-        "This is a placeholder response. Later we will connect FastAPI + Groq here.",
-    };
+    setMessages((prev) => [...prev, userMessage]);
+
+    let botText = "";
 
     setMessages((prev) => [
       ...prev,
-      userMessage,
-      assistantMessage,
+      { role: "assistant", content: "" },
     ]);
+
+    await streamChat(question, (chunk) => {
+      botText += chunk;
+
+      setMessages((prev) => {
+        const updated = [...prev];
+        updated[updated.length - 1] = {
+          role: "assistant",
+          content: botText,
+        };
+        return updated;
+      });
+    });
 
     setQuestion("");
   };
 
   return (
-    <div
-      style={{
-        width: "800px",
-        marginTop: "30px",
-        border: "1px solid #ddd",
-        borderRadius: "12px",
-        overflow: "hidden",
-      }}
-    >
-      {/* Header */}
-      <div
-        style={{
-          padding: "15px",
-          backgroundColor: "#111827",
-          color: "white",
-          fontWeight: "bold",
-        }}
-      >
+    <div style={{ width: "800px", marginTop: "30px", border: "1px solid #ddd", borderRadius: "12px" }}>
+      
+      <div style={{ padding: "15px", backgroundColor: "#111827", color: "white" }}>
         AI Chat Assistant
       </div>
 
-      {/* Messages */}
-      <div
-        style={{
-          height: "400px",
-          overflowY: "auto",
-          padding: "20px",
-          backgroundColor: "#f9fafb",
-        }}
-      >
-        {messages.map((message, index) => (
-          <MessageBubble
-            key={index}
-            role={message.role}
-            content={message.content}
-          />
+      <div style={{ height: "400px", overflowY: "auto", padding: "20px" }}>
+        {messages.map((m, i) => (
+          <MessageBubble key={i} role={m.role} content={m.content} />
         ))}
       </div>
 
-      {/* Input Area */}
-      <div
-        style={{
-          display: "flex",
-          gap: "10px",
-          padding: "15px",
-          borderTop: "1px solid #ddd",
-        }}
-      >
+      <div style={{ display: "flex", gap: "10px", padding: "15px" }}>
         <input
-          type="text"
-          placeholder="Ask a question..."
           value={question}
           onChange={(e) => setQuestion(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === "Enter") {
-              handleSend();
-            }
-          }}
-          style={{
-            flex: 1,
-            padding: "12px",
-            borderRadius: "8px",
-            border: "1px solid #ccc",
-          }}
+          onKeyDown={(e) => e.key === "Enter" && handleSend()}
+          style={{ flex: 1, padding: "10px" }}
+          placeholder="Ask a question..."
         />
 
-        <button
-          onClick={handleSend}
-          style={{
-            padding: "12px 20px",
-            backgroundColor: "#2563eb",
-            color: "white",
-            border: "none",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
+        <button onClick={handleSend}>
           Send
         </button>
       </div>

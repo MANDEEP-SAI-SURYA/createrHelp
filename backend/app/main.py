@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-
+from fastapi.middleware.cors import CORSMiddleware
 from app.youtube_service import process_youtube_url
 from app.retrieval import retrieve_context
 from app.groq_llm import ask_groq
@@ -9,7 +9,15 @@ from app.groq_llm import stream_groq
 
 app = FastAPI()
 
-
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",  # React frontend
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 class YoutubeRequest(BaseModel):
     url: str
@@ -78,36 +86,6 @@ def chat(data: ChatRequest):
         
 class ChatRequest(BaseModel):
     question: str
-
-
-# @app.post("/chat-stream")
-# def chat_stream(data: ChatRequest):
-
-#     docs = retrieve_context(data.question)
-
-#     def generate():
-
-#         response = client.chat.completions.create(
-#             model="llama-3.3-70b-versatile",
-#             messages=[
-#                 {
-#                     "role": "user",
-#                     "content": data.question
-#                 }
-#             ],
-#             stream=True
-#         )
-
-#         for chunk in response:
-
-#             if chunk.choices[0].delta.content:
-#                 yield chunk.choices[0].delta.content
-
-#     return StreamingResponse(
-#         generate(),
-#         media_type="text/plain"
-#     )
-
 
 
 @app.post("/chat-stream")
