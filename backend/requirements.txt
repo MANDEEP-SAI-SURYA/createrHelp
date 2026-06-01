@@ -5,3 +5,11 @@ python-dotenv
 youtube-transcript-api
 assemblyai 
 yt-dlp
+qdrant-client
+langchain
+langgraph
+groq
+sentence-transformers
+langchain-text-splitters
+langchain-community
+langchain_classic

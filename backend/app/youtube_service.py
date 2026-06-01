@@ -8,6 +8,8 @@ from youtube_transcript_api import YouTubeTranscriptApi
 from app.audio_service import download_audio
 from app.assembly_service import transcribe_audio
 
+from app.ingest import ingest_video_data
+
 load_dotenv()
 
 YOUTUBE_API_KEY = os.getenv("YOUTUBE_API_KEY")
@@ -141,6 +143,8 @@ def process_youtube_url(url: str):
             video_id,
             url
         )
+    
+    ingest_video_data(video_metadata,channel_metadata,transcript)
 
     return {
     "video_metadata": video_metadata,

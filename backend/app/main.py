@@ -2,18 +2,27 @@ from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 
 from app.youtube_service import process_youtube_url
+from app.retrieval import retrieve_context
+from app.groq_llm import ask_groq
+from fastapi.responses import StreamingResponse
+from app.groq_llm import stream_groq
 
 app = FastAPI()
+
 
 
 class YoutubeRequest(BaseModel):
     url: str
 
 
+class ChatRequest(BaseModel):
+    question: str
+
+
 @app.get("/")
 def home():
     return {
-        "message": "YouTube Extraction API Running"
+        "message": "Social Media RAG API Running"
     }
 
 
@@ -30,9 +39,83 @@ def extract_youtube(data: YoutubeRequest):
         }
 
     except Exception as e:
+
         print("ERROR:", repr(e))
 
         raise HTTPException(
             status_code=400,
             detail=str(e)
+        )
+
+@app.post("/chat")
+def chat(data: ChatRequest):
+
+    try:
+
+        docs = retrieve_context(
+            data.question
+        )
+
+        answer = ask_groq(
+            data.question,
+            docs
+        )
+
+        return {
+            "success": True,
+            "answer": answer,
+            "sources": docs
+        }
+
+    except Exception as e:
+
+        print("CHAT ERROR:", repr(e))
+
+        raise HTTPException(
+            status_code=400,
+            detail=str(e)
+        )
+        
+class ChatRequest(BaseModel):
+    question: str
+
+
+# @app.post("/chat-stream")
+# def chat_stream(data: ChatRequest):
+
+#     docs = retrieve_context(data.question)
+
+#     def generate():
+
+#         response = client.chat.completions.create(
+#             model="llama-3.3-70b-versatile",
+#             messages=[
+#                 {
+#                     "role": "user",
+#                     "content": data.question
+#                 }
+#             ],
+#             stream=True
+#         )
+
+#         for chunk in response:
+
+#             if chunk.choices[0].delta.content:
+#                 yield chunk.choices[0].delta.content
+
+#     return StreamingResponse(
+#         generate(),
+#         media_type="text/plain"
+#     )
+
+
+
+@app.post("/chat-stream")
+def chat_stream(data: ChatRequest):
+
+    docs = retrieve_context(data.question)
+
+    return StreamingResponse(
+        stream_groq(data.question, docs),
+        media_type="text/plain"
     )
