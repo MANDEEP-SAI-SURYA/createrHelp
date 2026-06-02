@@ -6,6 +6,9 @@ from app.retrieval import retrieve_context
 from app.groq_llm import ask_groq
 from fastapi.responses import StreamingResponse
 from app.groq_llm import stream_groq
+from app.instagram import extract_instagram_data
+from app.ingest import ingest_video_data, ingest_instagram_data
+
 
 app = FastAPI()
 
@@ -83,9 +86,6 @@ def chat(data: ChatRequest):
             status_code=400,
             detail=str(e)
         )
-        
-class ChatRequest(BaseModel):
-    question: str
 
 
 @app.post("/chat-stream")
@@ -97,3 +97,29 @@ def chat_stream(data: ChatRequest):
         stream_groq(data.question, docs),
         media_type="text/plain"
     )
+    
+    
+class InstagramRequest(BaseModel):
+    url: str
+
+
+@app.post("/instagram")
+def process_instagram(data: InstagramRequest):
+
+    (
+        video_metadata,
+        channel_metadata,
+        transcript,
+        comments
+    ) = extract_instagram_data(data.url)
+
+    ingest_instagram_data(
+        video_metadata,
+        channel_metadata,
+        transcript,
+        comments
+    )
+
+    return {
+        "message": "Instagram processed"
+    }

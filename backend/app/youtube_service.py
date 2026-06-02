@@ -144,7 +144,7 @@ def process_youtube_url(url: str):
             url
         )
     
-    ingest_video_data(video_metadata,channel_metadata,transcript)
+    ingest_video_data(video_metadata,channel_metadata,transcript, platform="youtube")
 
     return {
     "video_metadata": video_metadata,
