@@ -38,6 +38,7 @@ Duration: {video_metadata['duration']}
         "text": metadata_text,
         "platform": platform,
         "video_id": video_metadata["video_id"],
+        "video_ref": f"{channel_metadata['channel_name']} - {video_metadata['title'][:60]}",
         "chunk_type": "metadata",
         "title": video_metadata["title"],
         "creator": channel_metadata["channel_name"],
@@ -182,6 +183,7 @@ def ingest_instagram_data(video_metadata,channel_metadata,transcript,comments=No
         "text": metadata_text,
         "platform": "instagram",
         "video_id": video_metadata["video_id"],
+        "video_ref": f"{channel_metadata['channel_name']} - {video_metadata['title'][:60]}",
         "chunk_type": "metadata",
         "title": video_metadata["title"],
         "creator": channel_metadata["channel_name"],
@@ -254,6 +256,15 @@ def ingest_instagram_data(video_metadata,channel_metadata,transcript,comments=No
         for comment in comments:
 
             if not comment.strip():
+                continue
+
+            if "instagram.com" in comment.lower():
+                continue
+
+            if "http" in comment.lower():
+                continue
+
+            if len(comment.strip()) < 5:
                 continue
 
             comment_payloads.append(

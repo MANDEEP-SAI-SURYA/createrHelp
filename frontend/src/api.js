@@ -40,3 +40,27 @@ export const streamChat = async (question, onChunk) => {
 
   return fullText;
 };
+
+
+export const processInstagram = async (url) => {
+  const response = await fetch(
+    "http://127.0.0.1:8000/instagram",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        url,
+      }),
+    }
+  );
+
+  if (!response.ok) {
+    throw new Error(
+      "Instagram processing failed"
+    );
+  }
+
+  return response.json();
+};

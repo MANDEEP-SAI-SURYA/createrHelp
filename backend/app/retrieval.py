@@ -21,5 +21,16 @@ def retrieve_context(query):
             "score": hit.score,
             **hit.payload
         })
+        
+    
+    for hit in results:
+        print(
+            "\nScore:", hit.score,
+            "\nCreator:", hit.payload.get("creator"),
+            "\nTitle:", hit.payload.get("title"),
+            "\nChunk Type:", hit.payload.get("chunk_type"),
+            "\nText:", hit.payload.get("text", "")[:150]
+        )
+    
 
     return docs

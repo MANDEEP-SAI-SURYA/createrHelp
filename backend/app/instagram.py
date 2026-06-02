@@ -11,7 +11,9 @@ BASE_URL = "https://creatorcrawl.com/api"
 HEADERS = {
     "x-api-key": CREATORCRAWL_API_KEY
 }
-
+headers={
+        "x-api-key": os.getenv("CREATORCRAWL_API_KEY")
+    }
 
 def get_post_info(url):
 
@@ -27,16 +29,25 @@ def get_post_info(url):
 
 
 def get_transcript(url):
+    try:
+        response = requests.get(
+            f"{BASE_URL}/instagram/media/transcript",
+            params={"url": url},
+            headers=headers,
+            timeout=30
+        )
 
-    response = requests.get(
-        f"{BASE_URL}/instagram/media/transcript",
-        params={"url": url},
-        headers=HEADERS
-    )
+        if response.status_code != 200:
+            print("Transcript API error:", response.status_code, response.text)
+            return None
 
-    response.raise_for_status()
+        data = response.json()
 
-    return response.json()
+        return data.get("data", {}).get("text", "")
+
+    except Exception as e:
+        print("Transcript exception:", repr(e))
+        return None
 
 
 def get_comments(url):
@@ -52,16 +63,14 @@ def get_comments(url):
     return response.json()
 
 
-def get_basic_profile(user_id):
-
+def get_basic_profile(handle):
     response = requests.get(
         f"{BASE_URL}/instagram/basic-profile",
-        params={"user_id": user_id},
+        params={"username": handle},
         headers=HEADERS
     )
 
     response.raise_for_status()
-
     return response.json()
 
 
@@ -84,26 +93,16 @@ def extract_instagram_data(url):
 
     try:
 
-        transcript_response = get_transcript(url)
+        transcript_api = get_transcript(url)
 
-        transcript_data = (
-            transcript_response.get(
-                "data",
-                {}
-            )
-        )
-
-        transcript = transcript_data.get(
-            "transcript",
-            transcript
-        )
+        if transcript_api:
+            transcript = transcript_api
+        else:
+            print("Transcript fallback → using caption only")
 
     except Exception as e:
 
-        print(
-            "Transcript fetch failed:",
-            e
-        )
+        print("Transcript fetch failed:",e)
 
     # Comments
     comments = []
@@ -194,6 +193,7 @@ def extract_instagram_data(url):
     print("Instagram Creator:",channel_metadata)
 
     print("Transcript Length:",len(transcript))
+    print("Transcript Length:",transcript)
 
     print("Comments Count:",len(comments))
 

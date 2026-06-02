@@ -17,7 +17,7 @@ client = QdrantClient(
     api_key=os.getenv("QDRANT_API_KEY")
 )
 
-COLLECTION_NAME = "youtube_rag"
+COLLECTION_NAME = "CreaterHelp_rag"
 
 
 def create_collection():
@@ -44,17 +44,17 @@ def create_collection():
         print("Collection created!")
 
 
-def store_documents(chunks, embeddings):
+def store_documents(payloads, embeddings):
 
     points = []
 
-    for chunk, vector in zip(chunks, embeddings):
+    for payload, vector in zip(payloads, embeddings):
 
         points.append(
             PointStruct(
                 id=str(uuid.uuid4()),
                 vector=vector,
-                payload=chunk
+                payload=payload   
             )
         )
 
